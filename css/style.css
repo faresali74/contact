@@ -255,11 +255,10 @@ span .imgholder {
 .innercard {
   display: flex;
   flex-direction: column;
-  /* لو حابب الكارت نفسه يبقى بنفس ارتفاع المحتوى + الفوت */
 }
 
 .cardfoot {
-  margin-top: auto; /* يخلي الفوت دائمًا في أسفل الكارت */
+  margin-top: auto;
   width: 100%;
 }
 

@@ -10,7 +10,7 @@ var contactList = [];
 var filteredList = [];
 var currentIndex = null;
 var notFound = document.getElementById("notFound");
-
+// setting local storage
 if (localStorage.getItem("contacts") != null) {
   contactList = JSON.parse(localStorage.getItem("contacts"));
 } else {
@@ -26,6 +26,7 @@ function openForm() {
 function closeForm() {
   formContact.classList.add("d-none");
 }
+
 function addContact() {
   event.preventDefault();
 
@@ -41,19 +42,21 @@ function addContact() {
   };
   if (nameValidation()) {
     if (phoneValidation()) {
-      if (currentIndex === null) {
-        contactList.push(contact);
-        sucssful();
-      } else {
-        contactList[currentIndex] = contact;
-        updated();
-        currentIndex = null;
+      if (meilValidation()) {
+        if (currentIndex === null) {
+          contactList.push(contact);
+          sucssful();
+        } else {
+          contactList[currentIndex] = contact;
+          updated();
+          currentIndex = null;
+        }
+        localStorage.setItem("contacts", JSON.stringify(contactList));
+        displayContact(contactList);
+        changeTotal();
+        clearForm();
+        closeForm();
       }
-      localStorage.setItem("contacts", JSON.stringify(contactList));
-      displayContact(contactList);
-      changeTotal();
-      clearForm();
-      closeForm();
     }
   }
 }
@@ -75,8 +78,16 @@ function displayContact(flist) {
         <div class="cont-card d-flex flex-column flex-grow-1">
           <div class="cardHead d-flex flex-row">
             <div class="icon position-relative me-3">
+            <div class="category">
+                <i class="fa-solid fa-star text-white rounded-circle d-flex justify-content-center align-items-center ${
+                  flist[i].favorite ? "" : "d-none"
+                }"></i>
+                <i class="fa-solid fa-heart-pulse text-white rounded-circle d-flex justify-content-center align-items-center ${
+                  flist[i].emergency ? "" : "d-none"
+                }"></i>
+              </div>
               <p class="char p-3 text-center text-uppercase rounded-3 text-white fw-semibold fs-5 mb-0">
-                ${flist[i].name ? flist[i].name[0] : ""}
+                ${flist[i].name[0]}
               </p>
             </div>
             <div class="info">
@@ -215,11 +226,11 @@ function updateContact(index) {
   email.value = contact.mail;
   address.value = contact.address;
   category.value = contact.category;
-  notes.value = contact.notes;
   document.getElementById("favorite").checked = contact.favorite || false;
   document.getElementById("emergency").checked = contact.emergency || false;
   openForm();
 }
+
 function editContact() {
   contactList[currentIndex] = {
     name: fullName.value,
@@ -251,17 +262,20 @@ function searchContact(searchvalue) {
 
 function changeTotal() {
   var totalCounter = contactList.length;
-  var favoritesCounter = contactList.filter(
-    (contact) => contact.favorite
-  ).length;
-  var emergencyCounter = contactList.filter(
-    (contact) => contact.emergency
-  ).length;
+  var favoritesCounter = 0;
+  var emergencyCounter = 0;
 
-  document.getElementById("total").innerHTML = `
-    <h4 class="mb-0 fw-medium text-uppercase">Total</h4>
-    <p class="ms-1 fw-bold fs-4">${totalCounter}</p>
-  `;
+  for (var i = 0; i < contactList.length; i++) {
+    if (contactList[i].favorite) favoritesCounter++;
+    if (contactList[i].emergency) emergencyCounter++;
+  }
+
+  document.getElementById("total").innerHTML =
+    "<h4 class='mb-0 fw-medium text-uppercase'>Total</h4>" +
+    "<p class='ms-1 fw-bold fs-4'>" +
+    totalCounter +
+    "</p>";
+
   document.querySelector(".cardFav .txtTotal p").innerHTML = favoritesCounter;
   document.querySelector(".cardEmergancy .txtTotal p").innerHTML =
     emergencyCounter;
@@ -279,7 +293,7 @@ function clearForm() {
 function nameValidation() {
   var nameShort = document.getElementById("nameShort");
   if (fullName.value) {
-    if (fullName.value.length > 1 && fullName.value.length < 20) {
+    if (fullName.value.length > 1 && fullName.value.length < 50) {
       return true;
     } else {
       invalidValueName();
@@ -290,6 +304,7 @@ function nameValidation() {
     missValueName();
   }
 }
+
 function phoneValidation() {
   var regex = /^01[0125]\d{8}$/;
   var phoneInvalid = document.getElementById("phoneInvalid");
@@ -316,6 +331,19 @@ function phoneValidation() {
   }
 
   return true;
+}
+
+function meilValidation() {
+  var regex = /^((?!\.)[\w\-_.]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])$/;
+  if (email.value.length === 0) {
+    return true;
+  } else if (regex.test(email.value)) {
+    return true;
+  } else {
+    mailInvalid.classList.remove("d-none");
+    invalidValueEmail();
+    return false;
+  }
 }
 
 function addFavorite(index) {
@@ -468,6 +496,13 @@ function invalidValuePhone() {
     icon: "error",
     title: "Invalid Phone",
     text: "Please enter a valid Egyptian phone number (e.g., 01012345678 or +201012345678)",
+  });
+}
+function invalidValueEmail() {
+  Swal.fire({
+    icon: "error",
+    title: "Invalid Email",
+    text: "Please enter a valid email address",
   });
 }
 
